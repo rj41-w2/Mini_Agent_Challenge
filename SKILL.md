@@ -8,5 +8,8 @@ Analyze user text input and determine its emotional tone.
 2. Send the text to an LLM API with a strict system prompt.
 3. The LLM output MUST be exactly one word: POSITIVE or NEGATIVE.
 4. If the captured word is NEGATIVE, trigger a sympathetic print response.
-## Rules (Updated)
 5. AUTONOMOUS ACTION: If the sentiment is NEGATIVE, do not just print a message. You MUST autonomously trigger the `log_complaint` tool to save the user's exact sentence into a `complaints.txt` file with a timestamp.
+## Rules (Updated)
+6. MULTI-TOOL LOGIC: You now have access to two tools: `log_complaint` and `read_complaints`.
+   - If the user sentiment is NEGATIVE, use `log_complaint`.
+   - If the user asks "Show history", you MUST trigger `read_complaints` and summarize the output.
