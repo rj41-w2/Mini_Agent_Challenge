@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environments
+env/
+venv/
+.env
+.venv/
+env.bak/
+venv.bak/
+
+# Logs and databases
+complaints.txt
+emotions_log.db
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db

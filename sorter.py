@@ -33,7 +33,7 @@ instruction = (
 )
 
 model = genai.GenerativeModel(
-    "gemini-2.5-flash",
+    "gemini-3.1-flash-lite-preview",
     tools=[log_complaint, read_complaints],
     system_instruction=instruction
 )
