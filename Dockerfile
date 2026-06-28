@@ -1,17 +1,28 @@
-# Use an official Python runtime as a parent image
-FROM python:3.11-slim
+# Stage 1: Build Next.js frontend
+FROM node:20-alpine AS frontend-builder
+WORKDIR /app/frontend
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+COPY frontend/ ./
+RUN npm run build
 
-# Set the working directory in the container
+# Stage 2: Setup Python FastAPI backend
+FROM python:3.11-slim
 WORKDIR /app
 
-# Copy just the requirements.txt first to leverage Docker cache
+# Install dependencies
 COPY requirements.txt .
-
-# Install the Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application code
-COPY . .
+# Copy Python backend files
+COPY sorter.py .
+COPY SKILL.md .
 
-# Run the python script
+# Copy built frontend files
+COPY --from=frontend-builder /app/frontend/out ./frontend/out
+
+# Expose Hugging Face Spaces default port
+EXPOSE 7860
+
+# Run FastAPI server
 CMD ["python", "sorter.py"]

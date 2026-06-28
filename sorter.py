@@ -1,58 +1,112 @@
-import os, sys, datetime
+import os, sys, datetime, sqlite3
+from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 import google.generativeai as genai
+from fastapi.middleware.cors import CORSMiddleware
 
-def log_complaint(complaint_text: str) -> str:
-    """Logs a negative complaint into the complaints file with a timestamp."""
-    with open("complaints.txt", "a") as f:
-        f.write(f"{datetime.datetime.now()} - {complaint_text}\n")
-    return "Complaint logged."
+DB_FILE = "emotions_log.db"
 
-def read_complaints() -> str:
-    """Reads the history of complaints and returns them."""
-    if not os.path.exists("complaints.txt"):
-        return "No complaints logged yet."
-    with open("complaints.txt", "r") as f:
-        lines = f.readlines()
-    return f"Total complaints received: {len(lines)}\n" + "".join(lines)
+def init_db():
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS logs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    timestamp TEXT,
+                    emotion TEXT,
+                    user_text TEXT
+                 )''')
+    conn.commit()
+    conn.close()
+
+def log_emotion_to_db(emotion: str, text: str) -> str:
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("INSERT INTO logs (timestamp, emotion, user_text) VALUES (?, ?, ?)", 
+              (str(datetime.datetime.now()), emotion.upper(), text))
+    conn.commit()
+    conn.close()
+    return "Log saved to database successfully."
+
+def read_history_from_db() -> list:
+    if not os.path.exists(DB_FILE):
+        return []
+    conn = sqlite3.connect(DB_FILE)
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute("SELECT * FROM logs ORDER BY id DESC")
+    rows = c.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
 
 api_key = os.environ.get("GEMINI_API_KEY")
 if not api_key:
     print("\n[ERROR] GEMINI_API_KEY set nahi hai! Pehle terminal mein key set karein.")
-    print("Windows CMD: set GEMINI_API_KEY=your_key")
-    print("PowerShell: $env:GEMINI_API_KEY=\"your_key\"\n")
     sys.exit(1)
 
 genai.configure(api_key=api_key)
+init_db()
 
 instruction = (
     "Analyze the user's input. "
-    "If the user asks about the history of complaints, call read_complaints and provide a helpful summary to the user. "
-    "Otherwise, determine the sentiment of the input. "
-    "If NEGATIVE, first call log_complaint with the exact sentence, then output EXACTLY the word: NEGATIVE. "
-    "If POSITIVE, output EXACTLY the word: POSITIVE."
+    "Determine the sentiment/emotion of the input. Valid categories: POSITIVE, NEGATIVE, SAD, SARCASTIC, EXCITED, NEUTRAL. "
+    "You MUST first call log_emotion_to_db with the detected emotion and the exact user sentence. "
+    "Then output EXACTLY the emotion word (e.g., NEGATIVE, POSITIVE, SAD, etc.)."
 )
 
 model = genai.GenerativeModel(
-    "gemini-3.1-flash-lite-preview",
-    tools=[log_complaint, read_complaints],
+    "gemini-2.5-flash",
+    tools=[log_emotion_to_db],
     system_instruction=instruction
 )
-chat = model.start_chat(enable_automatic_function_calling=True)
 
-while True:
-    text = input("\nEnter a message (type 'exit' to stop): ")
-    if text.strip().lower() == 'exit':
-        break
-        
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+class ChatRequest(BaseModel):
+    message: str
+
+responses = {
+    "NEGATIVE": "Bro, why so angry?",
+    "POSITIVE": "That's the spirit! Keep it positive.",
+    "SAD": "Cheer up, everything will be alright!",
+    "SARCASTIC": "Wow, so funny. Not.",
+    "EXCITED": "Whoa, calm down, take a deep breath!",
+    "NEUTRAL": "Okay, got it."
+}
+
+@app.post("/api/chat")
+async def chat(request: ChatRequest):
     try:
-        response = chat.send_message(text)
-        out = response.text.strip()
+        chat_session = model.start_chat(enable_automatic_function_calling=True)
+        response = chat_session.send_message(request.message)
+        out = response.text.strip().upper()
         
-        if out.upper() == "NEGATIVE":
-            print("Bro, why so angry?")
-        elif out.upper() == "POSITIVE":
-            print("That's the spirit! Keep it positive.")
-        else:
-            print(out)
+        reply = out
+        for emotion, res in responses.items():
+            if emotion in out:
+                reply = res
+                break
+                
+        return {"reply": reply, "emotion": out}
     except Exception as e:
-        print(f"\n[ERROR] Request fail ho gayi. Wajah: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/history")
+async def history():
+    return {"history": read_history_from_db()}
+
+# Serve Next.js static files
+if os.path.exists("frontend/out"):
+    app.mount("/", StaticFiles(directory="frontend/out", html=True), name="static")
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=7860)
