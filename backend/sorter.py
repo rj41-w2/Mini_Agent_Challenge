@@ -1,9 +1,10 @@
 import os, sys, datetime, sqlite3, json
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Form, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import google.generativeai as genai
 from fastapi.middleware.cors import CORSMiddleware
+from twilio.twiml.messaging_response import MessagingResponse
 
 DB_FILE = "emotions_log.db"
 
@@ -115,6 +116,30 @@ async def chat(request: ChatRequest):
         return {"reply": reply, "emotion": emotion}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/whatsapp")
+async def whatsapp(Body: str = Form(...)):
+    try:
+        response = chat_session.send_message(Body)
+        text = response.text.strip()
+        
+        reply = text
+        lines = text.split('\n')
+        for i, line in enumerate(lines):
+            if line.startswith("REPLY:"):
+                reply = "\n".join(lines[i:]).replace("REPLY:", "").strip()
+                break
+                
+        if "EMOTION:" not in text and "REPLY:" not in text:
+            reply = text
+
+        twiml = MessagingResponse()
+        twiml.message(reply)
+        return Response(content=str(twiml), media_type="application/xml")
+    except Exception as e:
+        twiml = MessagingResponse()
+        twiml.message("Sorry, I encountered an error: " + str(e))
+        return Response(content=str(twiml), media_type="application/xml")
 
 @app.get("/api/history")
 async def history():
