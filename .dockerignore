@@ -1,0 +1,9 @@
+node_modules
+frontend/node_modules
+.next
+frontend/.next
+frontend/out
+__pycache__
+emotions_log.db
+.git
+.env
