@@ -11,12 +11,11 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Install dependencies
-COPY requirements.txt .
+COPY backend/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy Python backend files
-COPY sorter.py .
-COPY SKILL.md .
+COPY backend/ ./
 
 # Copy built frontend files
 COPY --from=frontend-builder /app/frontend/out ./frontend/out

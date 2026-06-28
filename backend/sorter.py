@@ -126,7 +126,11 @@ async def history():
     conn.close()
     return {"history": [dict(row) for row in rows]}
 
-if os.path.exists("frontend/out"):
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FRONTEND_DIR = os.path.join(os.path.dirname(BASE_DIR), "frontend", "out")
+if os.path.exists(FRONTEND_DIR):
+    app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="static")
+elif os.path.exists("frontend/out"):
     app.mount("/", StaticFiles(directory="frontend/out", html=True), name="static")
 
 if __name__ == "__main__":
