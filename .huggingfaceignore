@@ -1,3 +1,8 @@
+# Ignore Node.js and Next.js build folders
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+
 # Python
 __pycache__/
 *.py[cod]
@@ -9,24 +14,11 @@ env/
 venv/
 .env
 .venv/
-env.bak/
-venv.bak/
 
 # Logs and databases
 complaints.txt
 emotions_log.db
 
-# IDEs and Editors
-.vscode/
-.idea/
-*.swp
-*.swo
-
 # OS generated files
 .DS_Store
 Thumbs.db
-
-# Frontend
-frontend/node_modules/
-frontend/.next/
-frontend/out/
