@@ -15,6 +15,19 @@ type HistoryItem = {
   user_text: string;
 };
 
+// Generate or retrieve a UUID for the user session
+const getUserId = () => {
+  if (typeof window !== 'undefined') {
+    let id = localStorage.getItem('chat_user_id');
+    if (!id) {
+      id = 'user_' + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem('chat_user_id', id);
+    }
+    return id;
+  }
+  return 'default_user';
+};
+
 export default function Home() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -24,18 +37,21 @@ export default function Home() {
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  const [userId, setUserId] = useState<string>('');
+
+  useEffect(() => {
+    setUserId(getUserId());
+    scrollToBottom();
+  }, [messages]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || !userId) return;
     
     const userMessage = input.trim();
     setInput('');
@@ -46,7 +62,7 @@ export default function Home() {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessage }),
+        body: JSON.stringify({ message: userMessage, user_id: userId }),
       });
       const data = await res.json();
       setMessages(prev => [...prev, { role: 'assistant', text: data.reply, emotion: data.emotion }]);
@@ -59,8 +75,9 @@ export default function Home() {
   };
 
   const loadHistory = async () => {
+    if (!userId) return;
     try {
-      const res = await fetch('/api/history');
+      const res = await fetch(`/api/history?user_id=${userId}`);
       const data = await res.json();
       setHistory(data.history);
       setShowHistory(true);
@@ -77,8 +94,8 @@ export default function Home() {
             <h1>Sentiment Assistant</h1>
             <p className="subtitle">With Contextual Memory & Multi-Tools</p>
           </div>
-          <button className="icon-btn" onClick={loadHistory} title="View Database History">
-            🗄️ History
+          <button className="icon-btn" onClick={loadHistory} title="View Private Database History">
+            🗄️ My History
           </button>
         </header>
 
@@ -117,7 +134,8 @@ export default function Home() {
         <div className="history-modal">
           <div className="history-content">
             <button className="close-btn" onClick={() => setShowHistory(false)}>×</button>
-            <h2 style={{ marginBottom: '20px' }}>Database Logs</h2>
+            <h2 style={{ marginBottom: '5px' }}>My Private History</h2>
+            <p className="text-muted" style={{ marginBottom: '20px' }}>ID: {userId}</p>
             {history.length === 0 ? (
               <p>No history found.</p>
             ) : (
