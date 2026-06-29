@@ -1,3 +1,12 @@
+---
+title: Mini Agent Challenge
+emoji: 🚀
+colorFrom: blue
+colorTo: purple
+sdk: docker
+pinned: false
+---
+
 # Sentiment Sorter / AI Assistant
 
 Welcome to the **Sentiment Sorter**, an empathetic, intelligent AI Assistant designed with contextual memory and emotion tracking. Built for the Mini Agent Challenge, this full-stack application utilizes the latest web and AI technologies.
