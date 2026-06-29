@@ -7,7 +7,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from twilio.twiml.messaging_response import MessagingResponse
 import contextvars
 
-DB_FILE = "backend/emotions_log.db"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_FILE = os.path.join(BASE_DIR, "emotions_log.db")
 
 # Context variable to keep track of the current user during a request
 current_user = contextvars.ContextVar('current_user', default='global')
