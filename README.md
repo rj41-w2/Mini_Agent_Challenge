@@ -38,9 +38,34 @@ Before you begin, ensure you have the following installed on your machine:
 
 ---
 
+## 🐳 Deploy Anywhere (Docker Compose)
+
+The easiest way to deploy this project on any cloud provider (AWS, Google Cloud, Render, etc.) or local machine is using Docker Compose.
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/rj41-w2/Mini_Agent_Challenge.git
+   cd Mini_Agent_Challenge
+   ```
+
+2. **Set up Environment Variables:**
+   Copy the example environment file and add your Gemini API key.
+   ```bash
+   cp .env.example .env
+   # Edit .env and set GEMINI_API_KEY="your_actual_key"
+   ```
+
+3. **Start the Application:**
+   ```bash
+   docker-compose up --build -d
+   ```
+   > The application will be running at `http://localhost:7860`.
+
+---
+
 ## 💻 Setup Instructions & Running Locally
 
-Follow these steps to get the project up and running on your local machine.
+If you prefer to run it without Docker, follow these steps to get the project up and running on your local machine.
 
 ### 1. Clone or Navigate to the Project Directory
 ```bash
