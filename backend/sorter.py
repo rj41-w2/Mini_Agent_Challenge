@@ -79,9 +79,9 @@ instruction = (
     "REPLY: [Your natural conversational response to the user IN ENGLISH ONLY]"
 )
 
-# CHANGED MODEL TO gemini-2.5-pro FOR HIGHER RATE LIMITS/FALLBACK
+# REVERTED TO gemini-2.5-flash (Free Tier supported)
 model = genai.GenerativeModel(
-    "gemini-2.5-pro",
+    "gemini-2.5-flash",
     tools=[log_emotion_to_db, read_history_from_db],
     system_instruction=instruction
 )
