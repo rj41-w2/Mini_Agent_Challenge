@@ -17,6 +17,6 @@ Analyze user text input and determine its emotional tone.
 - **Architecture**: Monorepo (Next.js frontend, FastAPI backend)
 - **Database**: SQLite (`backend/emotions_log.db`)
 - **Memory**: Contextual memory maintained per-user using `chat_sessions` dictionary and `contextvars`.
-- **Model**: `gemini-1.5-flash` (used for higher rate limits).
+- **Model**: `gemini-2.5-flash` (used for higher rate limits).
 - **Language**: English Only responses.
 - **WhatsApp**: Integrated via Twilio API (`/api/whatsapp`).e output.
